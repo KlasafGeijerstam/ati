@@ -1,5 +1,9 @@
 #![warn(missing_docs)]
-//!
+
+//! Ergonomic indexing of standard collections using `at` method.
+
+use std::collections::{LinkedList, VecDeque};
+use std::ops::{Index, IndexMut};
 
 /// At trait
 /// The `At<V,T>` trait allows an ordered collection containing type `V` to be indexed by type `T`.
@@ -42,11 +46,39 @@ pub trait At<V, T> {
     fn at_mut(&mut self, c: T) -> &mut V;
 }
 
+trait Length {
+    fn length(&self) -> usize;
+}
+
+impl<V> Length for Vec<V> {
+    fn length(&self) -> usize {
+        self.len()
+    }
+}
+
+impl<V, const L: usize> Length for [V; L] {
+    fn length(&self) -> usize {
+        self.len()
+    }
+}
+
+impl<V> Length for VecDeque<V> {
+    fn length(&self) -> usize {
+        self.len()
+    }
+}
+
+impl<V> Length for LinkedList<V> {
+    fn length(&self) -> usize {
+        self.len()
+    }
+}
+
 macro_rules! neg_index {
     ($len: expr, $i: expr, $it: ty) => {{
         let new_index = ($len as $it + $i);
         if new_index < 0 {
-            panic!("Index out of range ({new_index})");
+            panic!("index out of bounds: the index is ({new_index})");
         }
         new_index as usize
     }};
@@ -54,7 +86,7 @@ macro_rules! neg_index {
 
 macro_rules! at_unsigned {
     ($e: ty) => {
-        impl<V> At<V, $e> for Vec<V> {
+        impl<V, T: Index<usize, Output = V> + IndexMut<usize, Output = V>> At<V, $e> for T {
             fn at(&self, c: $e) -> &V {
                 &self[c as usize]
             }
@@ -68,17 +100,17 @@ macro_rules! at_unsigned {
 
 macro_rules! at_signed {
     ($e: ty) => {
-        impl<V> At<V, $e> for Vec<V> {
+        impl<V, T: Index<usize, Output = V> + IndexMut<usize, Output = V> + Length> At<V, $e> for T {
             fn at(&self, c: $e) -> &V {
                 if c < 0 {
-                    &self[neg_index!(self.len(), c, $e)]
+                    &self[neg_index!(self.length(), c, $e)]
                 } else {
                     &self[c as usize]
                 }
             }
 
             fn at_mut(&mut self, c: $e) -> &mut V {
-                let l = self.len();
+                let l = self.length();
                 if c < 0 {
                     &mut self[neg_index!(l, c, $e)]
                 } else {
@@ -119,7 +151,7 @@ fn test_positive() {
 }
 
 #[test]
-#[should_panic(expected = "Index out of range (-1)")]
+#[should_panic(expected = "index out of bounds: the index is (-1)")]
 fn test_negative_panic() {
     let v: Vec<i32> = (0..2).collect();
     v.at(-3);

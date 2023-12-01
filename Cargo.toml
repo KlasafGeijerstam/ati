@@ -1,10 +1,10 @@
 [package]
 name = "ati"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Klas af Geijerstam"]
 license = "MIT"
-description = "Introduces the `At` trait, which allows `Vec` to be indexed by `u|i{8,16,32,64,128}` and `isize`. Allows for Python-like negative index, where -1 is last element."
+description = "Introduces the `At` trait, which allows collections to be indexed by `u|i{8,16,32,64,128}` and `isize`. Supports Python-like negative index, where -1 is last element."
 repository = "https://github.com/KlasafGeijerstam/ati"
 
 [dependencies]
